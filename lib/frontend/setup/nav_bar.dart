@@ -52,6 +52,12 @@ class CENavBar extends StatelessWidget {
                       Icons.sports_basketball,
                       2,
                     ),
+                    _buildNavItem(
+                      context,
+                      Icons.settings_outlined,
+                      Icons.settings,
+                      3,
+                    ),
                     // _buildNavItem(context, Icons.article_outlined, Icons.article, 4),
                   ],
                 ),

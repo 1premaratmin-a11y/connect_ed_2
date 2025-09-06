@@ -3,6 +3,7 @@ import 'package:connect_ed_2/frontend/calendar/calendar.dart';
 import 'package:connect_ed_2/frontend/events/events.dart';
 import 'package:connect_ed_2/frontend/home/home.dart';
 import 'package:connect_ed_2/frontend/onboarding/welcome.dart';
+import 'package:connect_ed_2/frontend/settings/settings.dart';
 import 'package:connect_ed_2/frontend/setup/nav_bar.dart';
 import 'package:connect_ed_2/frontend/setup/styles.dart';
 import 'package:connect_ed_2/frontend/sports/sports.dart';
@@ -69,7 +70,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
 
-  List<Widget> pages = [HomePage(), CalendarPage(), SportsPage()];
+  List<Widget> pages = [
+    HomePage(),
+    CalendarPage(),
+    SportsPage(),
+    SettingsPage(),
+  ];
 
   @override
   Widget build(BuildContext context) {

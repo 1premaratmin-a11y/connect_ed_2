@@ -1,14 +1,9 @@
-import 'dart:ui';
-import 'dart:math'; // Added for max function in dialog
-
 import 'package:connect_ed_2/classes/assessment.dart';
 import 'package:connect_ed_2/classes/calendar_item.dart';
 import 'package:connect_ed_2/classes/game.dart';
 import 'package:connect_ed_2/classes/menu_section.dart';
 import 'package:connect_ed_2/classes/schedule_item.dart';
 import 'package:connect_ed_2/frontend/home/today_schedule.dart';
-import 'package:connect_ed_2/frontend/settings/settings.dart';
-import 'package:connect_ed_2/frontend/setup/app_bar.dart';
 import 'package:connect_ed_2/frontend/setup/opacity_button.dart';
 import 'package:connect_ed_2/frontend/sports/game_widgets.dart';
 import 'package:connect_ed_2/requests/cache_manager.dart';
@@ -666,26 +661,12 @@ class _HomePageState extends State<HomePage>
                               child: Column(
                                 children: [
                                   Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
                                       OpacityIconButton(
                                         onPressed:
                                             _showTodayMenuDialog, // Connect to menu dialog
                                         icon: Icons.flatware,
-                                        color: Colors.white,
-                                      ),
-                                      OpacityIconButton(
-                                        onPressed: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder:
-                                                  (context) => SettingsPage(),
-                                            ),
-                                          );
-                                        },
-                                        icon: Icons.settings_outlined,
                                         color: Colors.white,
                                       ),
                                     ],

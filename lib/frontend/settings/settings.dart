@@ -1,6 +1,7 @@
 import 'package:connect_ed_2/main.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'feedback_form.dart';
+import 'bug_report_form.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -111,17 +112,6 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  Future<void> _launchURL(String urlString) async {
-    final Uri url = Uri.parse(urlString);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not launch $urlString')));
-      }
-    }
-  }
-
   @override
   void dispose() {
     _calendarLinkController.removeListener(_updateButtonState);
@@ -135,21 +125,18 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
         slivers: [
-          // Custom AppBar (assuming CEAppBar is defined)
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: const Text(
-              'Settings',
-              style: TextStyle(
-                fontSize: 28,
-                fontFamily: 'Montserrat',
-                fontWeight: FontWeight.w600,
+          // Settings Header
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 16),
+              child: Text(
+                'Settings',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontFamily: 'Montserrat',
+                  fontWeight: FontWeight.w700,
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
           ),
@@ -295,7 +282,11 @@ class _SettingsPageState extends State<SettingsPage> {
                       children: [
                         ElevatedButton(
                           onPressed: () {
-                            _launchURL('https://forms.office.com/r/0BqkWRaEL3');
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const FeedbackFormPage(),
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
@@ -323,7 +314,11 @@ class _SettingsPageState extends State<SettingsPage> {
                         const SizedBox(width: 16),
                         ElevatedButton(
                           onPressed: () {
-                            _launchURL('https://forms.office.com/r/cn2xNd2M2V');
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) => const BugReportFormPage(),
+                              ),
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
