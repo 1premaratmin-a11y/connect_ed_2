@@ -170,7 +170,13 @@ class _CalendarWidgetState extends State<CalendarWidget>
         textColor = theme.colorScheme.onPrimary;
         fontWeight = FontWeight.w500;
       } else if (isToday) {
-        cellDecoration = BoxDecoration(color: Colors.transparent);
+        cellDecoration = BoxDecoration(
+          color: theme.colorScheme.primary.withAlpha(
+            40,
+          ), // Lighter circle for today
+          shape: BoxShape.circle,
+          border: borderStyle,
+        );
         textColor = theme.colorScheme.primary;
         fontWeight = FontWeight.w500;
       } else {

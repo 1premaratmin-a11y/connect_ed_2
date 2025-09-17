@@ -150,10 +150,67 @@ class CalendarManager extends CacheManager {
           );
           String courseName = getCourseName(item['summary']);
 
+          // Extract location from iCalendar data if available
+          String? location = item['location'] as String?;
+          String? instructor;
+
+          // If location is still null, try alternative field names
+          location ??= item['venue'] as String?;
+          location ??= item['details'] as String?;
+
+          // Extract instructor information if available
+          instructor = item['organizer'] as String?;
+          instructor ??= item['attendee'] as String?;
+
+          // Sometimes location and instructor info might be in the description
+          if (item['description'] != null) {
+            String description = item['description'] as String;
+
+            // Look for location patterns in description if not found yet
+            if (location == null) {
+              if (description.contains('Location:')) {
+                var locationMatch = RegExp(
+                  r'Location:\s*(.+?)(?:\n|$)',
+                ).firstMatch(description);
+                if (locationMatch != null) {
+                  location = locationMatch.group(1)?.trim();
+                }
+              } else if (description.contains('Room:')) {
+                var roomMatch = RegExp(
+                  r'Room:\s*(.+?)(?:\n|$)',
+                ).firstMatch(description);
+                if (roomMatch != null) {
+                  location = roomMatch.group(1)?.trim();
+                }
+              }
+            }
+
+            // Look for instructor patterns in description if not found yet
+            if (instructor == null) {
+              if (description.contains('Instructor:')) {
+                var instructorMatch = RegExp(
+                  r'Instructor:\s*(.+?)(?:\n|$)',
+                ).firstMatch(description);
+                if (instructorMatch != null) {
+                  instructor = instructorMatch.group(1)?.trim();
+                }
+              } else if (description.contains('Teacher:')) {
+                var teacherMatch = RegExp(
+                  r'Teacher:\s*(.+?)(?:\n|$)',
+                ).firstMatch(description);
+                if (teacherMatch != null) {
+                  instructor = teacherMatch.group(1)?.trim();
+                }
+              }
+            }
+          }
+
           ScheduleItem scheduleItem = ScheduleItem(
             title: courseName,
             startTime: TimeOfDay.fromDateTime(startDate),
             endTime: TimeOfDay.fromDateTime(endDate),
+            location: location,
+            instructor: instructor,
           );
 
           if (calendarData[date] == null) {

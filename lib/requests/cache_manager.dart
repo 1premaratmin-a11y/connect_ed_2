@@ -94,6 +94,13 @@ abstract class CacheManager {
     return null;
   }
 
+  /// Clears cached data and timestamp
+  void clearCache() {
+    prefs.remove(cacheKey);
+    prefs.remove('${cacheKey}_timestamp');
+    lastRecorded = null;
+  }
+
   /// Updates cache with new data from a provider function
   /// Throws any errors from the data provider function without fallback to cached data
 }

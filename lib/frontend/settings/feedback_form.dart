@@ -80,9 +80,7 @@ class _FeedbackFormPageState extends State<FeedbackFormPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Thank you for your feedback! We appreciate your input.',
-            ),
+            content: Text('Thank you for your feedback!'),
             backgroundColor: Colors.green,
           ),
         );

@@ -80,9 +80,7 @@ class _BugReportFormPageState extends State<BugReportFormPage> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'Thank you for reporting this bug! We\'ll look into it.',
-            ),
+            content: Text('Thank you for your feedback!'),
             backgroundColor: Colors.green,
           ),
         );
