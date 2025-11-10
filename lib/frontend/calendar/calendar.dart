@@ -7,7 +7,7 @@ import 'package:connect_ed_2/classes/menu_section.dart';
 import 'package:connect_ed_2/frontend/calendar/calendar_appbar.dart';
 import 'package:connect_ed_2/frontend/calendar/open_event.dart';
 import 'package:connect_ed_2/logger.dart';
-import 'package:connect_ed_2/requests/cache_manager.dart';
+import 'package:connect_ed_2/main.dart';
 import 'package:connect_ed_2/requests/calendar_requests.dart';
 import 'package:connect_ed_2/requests/menu_cache_manager.dart';
 import 'package:flutter/material.dart';
@@ -41,19 +41,13 @@ class _CalendarPageState extends State<CalendarPage>
 
   // Data variables
   Map<DateTime, CalendarItem>? _calendarData;
-  Future<Map<DateTime, CalendarItem>>? _calendarDataFuture;
-  bool _isLoading = true;
-  String? _errorMessage; // Add error message state
-  bool _hasDataLoadError = false; // Track if there's a data loading error
+  Map<DateTime, List<MenuSection>>? _menuData;
 
   // Time range for the schedule display
   late TimeOfDay _scheduleStartTime;
   late TimeOfDay _scheduleEndTime;
 
-  // Add menu data variables
-  Map<DateTime, List<MenuSection>>? _menuData;
-  bool _isLoadingMenu = false;
-  bool _hasMenuLoadError = false;
+  // Menu section expansion state
   final Map<int, bool> _expandedMenuSections = {};
 
   @override
@@ -98,85 +92,47 @@ class _CalendarPageState extends State<CalendarPage>
     ).add(Duration(days: index - 500));
   }
 
-  void _loadCalendarData() {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-      _hasDataLoadError = false;
-    });
-
-    // Get data from calendar manager with proper error handling
-    final cacheStatus = calendarManager.getCacheStatus();
-
-    if (cacheStatus != CacheStatus.expired) {
-      try {
-        _calendarData = calendarManager.getCachedData();
-        if (_calendarData != null) {
+  Future<void> _loadCalendarData() async {
+    // Always load cached data first to display immediately (never show loading/error)
+    try {
+      final cachedString = prefs.getString('calendar_data');
+      if (cachedString != null && cachedString.isNotEmpty) {
+        final cachedData = calendarManager.decodeData(cachedString);
+        if (cachedData != null && cachedData.isNotEmpty) {
           setState(() {
-            _isLoading = false;
-            _hasDataLoadError = false;
+            _calendarData = cachedData;
             _updateScheduleTimeRange();
           });
-          return;
         }
-      } catch (cacheError) {
-        // Handle cached data access error
-        print('Error accessing cached data: $cacheError');
-        // Continue to fetch fresh data instead of failing completely
       }
+    } catch (e) {
+      print('Error loading cached calendar data: $e');
     }
 
-    // Fetch fresh data if expired, no cached data, or cache access failed
-    calendarManager
-        .fetchData()
-        .then((data) {
-          setState(() {
-            _calendarData = data;
-            _isLoading = false;
-            _errorMessage = null;
-            _hasDataLoadError = false;
-            _updateScheduleTimeRange();
-          });
-        })
-        .catchError((error) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = _parseErrorMessage(error.toString());
-            _hasDataLoadError = true;
-            _updateScheduleTimeRange();
-          });
-          print('Error loading calendar data: $error');
-        });
-  }
-
-  // Parse error message to make it more user-friendly
-  String _parseErrorMessage(String errorMessage) {
-    if (errorMessage.contains('network') || errorMessage.contains('Network')) {
-      return 'Network connection error';
-    } else if (errorMessage.contains('timeout') ||
-        errorMessage.contains('Timeout')) {
-      return 'Request timed out';
-    } else if (errorMessage.contains('calendar service') ||
-        errorMessage.contains('calendar')) {
-      return 'Calendar service unavailable';
-    } else if (errorMessage.contains('Invalid') ||
-        errorMessage.contains('invalid')) {
-      return 'Invalid calendar link';
-    } else {
-      return 'Unable to load calendar data';
+    // Silently try to fetch fresh data in the background to update the cache
+    try {
+      final freshData = await calendarManager.fetchData();
+      setState(() {
+        _calendarData = freshData;
+        _updateScheduleTimeRange();
+      });
+    } catch (error) {
+      // Silently fail - keep showing cached data
+      print('Could not fetch fresh calendar data (using cached): $error');
     }
   }
 
   // Get schedule items for the selected date
   List<ScheduleItem> _getScheduleForSelectedDate() {
+    return _getScheduleForDate(_selectedDate);
+  }
+
+  // Get schedule items for a specific date
+  List<ScheduleItem> _getScheduleForDate(DateTime date) {
     if (_calendarData == null) return [];
 
     // Create a normalized date key (without time component)
-    final normalizedDate = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-    );
+    final normalizedDate = DateTime(date.year, date.month, date.day);
 
     if (_calendarData!.containsKey(normalizedDate)) {
       return _calendarData![normalizedDate]!.schedule;
@@ -202,35 +158,32 @@ class _CalendarPageState extends State<CalendarPage>
   }
 
   // Load menu data from cache manager
-  void _loadMenuData() {
-    // Try to get data from cache first
+  Future<void> _loadMenuData() async {
+    // Always load cached data first to display immediately
     try {
-      _menuData = menuManager.getCachedData();
-      if (_menuData != null) return;
+      final cachedString = prefs.getString('menu_data');
+      if (cachedString != null && cachedString.isNotEmpty) {
+        final cachedData = menuManager.decodeData(cachedString);
+        if (cachedData != null && cachedData.isNotEmpty) {
+          setState(() {
+            _menuData = cachedData;
+          });
+        }
+      }
     } catch (e) {
-      print('Error accessing cached menu: $e');
+      print('Error loading cached menu data: $e');
     }
 
-    // If no cached data or error, fetch fresh data
-    setState(() {
-      _isLoadingMenu = true;
-    });
-
-    menuManager
-        .fetchData()
-        .then((data) {
-          setState(() {
-            _menuData = data;
-            _isLoadingMenu = false;
-            _hasMenuLoadError = false;
-          });
-        })
-        .catchError((error) {
-          setState(() {
-            _isLoadingMenu = false;
-            _hasMenuLoadError = true;
-          });
-        });
+    // Silently try to fetch fresh data in the background
+    try {
+      final freshData = await menuManager.fetchData();
+      setState(() {
+        _menuData = freshData;
+      });
+    } catch (error) {
+      // Silently fail - keep showing cached data
+      print('Could not fetch fresh menu data (using cached): $error');
+    }
   }
 
   // Get menu for the selected date
@@ -494,61 +447,9 @@ class _CalendarPageState extends State<CalendarPage>
   }
 
   // Build the schedule items
-  Widget _buildScheduleItems() {
-    final scheduleItems = _getScheduleForSelectedDate();
-
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (_hasDataLoadError) {
-      return Center(
-        child: Container(
-          height: 250, // Increased height to match container height
-          alignment: Alignment.center,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 48,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Failed to load schedule',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.error,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                _errorMessage ?? 'Unknown error occurred',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _loadCalendarData,
-                icon: Icon(Icons.refresh, size: 16),
-                label: Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+  Widget _buildScheduleItems({DateTime? forDate}) {
+    final date = forDate ?? _selectedDate;
+    final scheduleItems = _getScheduleForDate(date);
 
     if (scheduleItems.isEmpty) {
       return Center(
@@ -695,18 +596,11 @@ class _CalendarPageState extends State<CalendarPage>
     final int totalScheduleHours =
         _scheduleEndTime.hour - _scheduleStartTime.hour + 1;
 
-    // Calculate appropriate height - provide more space for error states
+    // Calculate appropriate height
     final scheduleItems = _getScheduleForSelectedDate();
-    final double containerHeight;
-
-    if (_isLoading || _hasDataLoadError) {
-      containerHeight = 250; // Increased height for error/loading states
-    } else if (scheduleItems.isEmpty) {
-      containerHeight = 150; // Slightly increased for empty state
-    } else {
-      containerHeight =
-          totalScheduleHours * hourHeight + 40; // Normal schedule height
-    }
+    final double containerHeight = scheduleItems.isEmpty
+        ? 150 // Empty state
+        : totalScheduleHours * hourHeight + 40; // Normal schedule height
 
     return SliverStickyHeader(
       header: Container(
@@ -748,11 +642,8 @@ class _CalendarPageState extends State<CalendarPage>
                   controller: _dayPageController,
                   onPageChanged: _updateSelectedDateFromPage,
                   itemBuilder: (context, index) {
-                    final currentDate = _selectedDate;
-                    _selectedDate = _getDateFromPageIndex(index);
-                    final widget = _buildScheduleItems();
-                    _selectedDate = currentDate;
-                    return widget;
+                    final dateForPage = _getDateFromPageIndex(index);
+                    return _buildScheduleItems(forDate: dateForPage);
                   },
                 ),
               ),
@@ -879,8 +770,8 @@ class _CalendarPageState extends State<CalendarPage>
   Widget _buildAssessmentsSection() {
     final assessments = _getAssessmentsForSelectedDate();
 
-    // Return null if there are no assessments and no loading/error state
-    if (assessments.isEmpty && !_isLoading && !_hasDataLoadError) {
+    // Return null if there are no assessments
+    if (assessments.isEmpty) {
       return SliverToBoxAdapter(child: SizedBox.shrink());
     }
 
@@ -891,21 +782,9 @@ class _CalendarPageState extends State<CalendarPage>
           top: 32.0,
         ), // Add top padding of 32pts
         color: Theme.of(context).colorScheme.surface,
-        child: Row(
-          children: [
-            Text(
-              'Assessments',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-            ),
-            if (_hasDataLoadError) ...[
-              SizedBox(width: 8),
-              Icon(
-                Icons.error_outline,
-                color: Theme.of(context).colorScheme.error,
-                size: 20,
-              ),
-            ],
-          ],
+        child: Text(
+          'Assessments',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
         ),
       ),
       sliver: SliverToBoxAdapter(
@@ -916,61 +795,7 @@ class _CalendarPageState extends State<CalendarPage>
             children: [
               const SizedBox(height: 8), // Reduced spacing here
 
-              if (_isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (_hasDataLoadError)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Failed to load assessments',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.error,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          _errorMessage ?? 'Unknown error occurred',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.7),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 16),
-                        ElevatedButton.icon(
-                          onPressed: _loadCalendarData,
-                          icon: Icon(Icons.refresh, size: 16),
-                          label: Text('Retry'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else if (assessments.isEmpty)
+              if (assessments.isEmpty)
                 Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24.0),
@@ -1055,60 +880,15 @@ class _CalendarPageState extends State<CalendarPage>
   @override
   Widget build(BuildContext context) {
     final assessments = _getAssessmentsForSelectedDate();
-    final bool hasAssessments =
-        assessments.isNotEmpty || _isLoading || _hasDataLoadError;
+    final bool hasAssessments = assessments.isNotEmpty;
     final hasMenu = _getMenuForSelectedDate()?.isNotEmpty ?? false;
 
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          // Force refresh data and wait for completion
-          setState(() {
-            _isLoading = true;
-            _isLoadingMenu = true;
-            _errorMessage = null;
-            _hasDataLoadError = false;
-          });
-
-          try {
-            // Refresh calendar data
-            final newCalendarData = await calendarManager.fetchData();
-            // Refresh menu data
-            final newMenuData = await menuManager.fetchData();
-
-            setState(() {
-              _calendarData = newCalendarData;
-              _menuData = newMenuData;
-              _isLoading = false;
-              _isLoadingMenu = false;
-              _errorMessage = null;
-              _hasDataLoadError = false;
-              _updateScheduleTimeRange();
-            });
-          } catch (error) {
-            setState(() {
-              _isLoading = false;
-              _isLoadingMenu = false;
-              _errorMessage = _parseErrorMessage(error.toString());
-              _hasDataLoadError = true;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Failed to refresh: ${_parseErrorMessage(error.toString())}',
-                ),
-                backgroundColor: Theme.of(context).colorScheme.error,
-                action: SnackBarAction(
-                  label: 'Retry',
-                  textColor: Theme.of(context).colorScheme.onError,
-                  onPressed: () {
-                    _loadCalendarData();
-                    _loadMenuData();
-                  },
-                ),
-              ),
-            );
-          }
+          // Simply reload all data - loading happens silently with cached data shown
+          await _loadCalendarData();
+          await _loadMenuData();
         },
         child: CustomScrollView(
           controller: _scrollController,

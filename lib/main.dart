@@ -34,10 +34,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Connect-Ed',
       theme: ThemeData(
-        colorScheme:
-            MediaQuery.of(context).platformBrightness == Brightness.dark
-                ? darkScheme
-                : lightScheme,
+        colorScheme: darkScheme,
         fontFamily: 'Montserrat',
         useMaterial3: true,
       ),

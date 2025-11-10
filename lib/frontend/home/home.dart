@@ -6,6 +6,7 @@ import 'package:connect_ed_2/classes/schedule_item.dart';
 import 'package:connect_ed_2/frontend/home/today_schedule.dart';
 import 'package:connect_ed_2/frontend/setup/opacity_button.dart';
 import 'package:connect_ed_2/frontend/sports/game_widgets.dart';
+import 'package:connect_ed_2/main.dart';
 import 'package:connect_ed_2/requests/cache_manager.dart';
 import 'package:connect_ed_2/requests/calendar_requests.dart';
 import 'package:connect_ed_2/requests/games_cache_manager.dart';
@@ -30,19 +31,8 @@ class _HomePageState extends State<HomePage>
   // Add calendar data variables
   Map<DateTime, CalendarItem>? _calendarData;
   ScheduleItem? _nextScheduleItem;
-  bool _isLoading = false;
-  String? _errorMessage; // Add error message state
-  bool _hasDataLoadError = false; // Track if there's a data loading error
-
-  // Add state variable for menu data
-  bool _isLoadingMenu = false;
-  bool _hasMenuLoadError = false;
-  String? _menuErrorMessage;
 
   // Add game data variables
-  bool _isLoadingGames = true;
-  bool _hasGamesError = false;
-  String? _gamesErrorMessage;
   List<Game> _recentGames = [];
 
   @override
@@ -63,79 +53,36 @@ class _HomePageState extends State<HomePage>
   }
 
   // Load calendar data from the cache manager
-  void _loadCalendarData() {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-      _hasDataLoadError = false;
-    });
-
-    // Get data from calendar manager with proper error handling
-    final cacheStatus = calendarManager.getCacheStatus();
-
-    if (cacheStatus != CacheStatus.expired) {
-      try {
-        _calendarData = calendarManager.getCachedData();
-        if (_calendarData != null) {
+  Future<void> _loadCalendarData() async {
+    // Always load cached data first to display immediately (never show loading/error)
+    try {
+      final cachedString = prefs.getString('calendar_data');
+      if (cachedString != null && cachedString.isNotEmpty) {
+        final cachedData = calendarManager.decodeData(cachedString);
+        if (cachedData != null && cachedData.isNotEmpty) {
           setState(() {
-            _nextScheduleItem = _getNextScheduleItem(_calendarData!);
-            _isLoading = false;
-            _hasDataLoadError = false;
+            _calendarData = cachedData;
+            _nextScheduleItem = _getNextScheduleItem(cachedData);
           });
-          return;
         }
-      } catch (cacheError) {
-        // Handle cached data access error
-        print('Error accessing cached data: $cacheError');
-        // Continue to fetch fresh data instead of failing completely
       }
+    } catch (e) {
+      print('Error loading cached calendar data: $e');
     }
 
-    // Fetch fresh data if expired, no cached data, or cache access failed
-    calendarManager
-        .fetchData()
-        .then((data) {
-          setState(() {
-            _calendarData = data;
-            _nextScheduleItem = _getNextScheduleItem(data);
-            _isLoading = false;
-            _errorMessage = null;
-            _hasDataLoadError = false;
-          });
-        })
-        .catchError((error) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = _parseErrorMessage(error.toString());
-            _hasDataLoadError = true;
-            // Set fallback data for UI
-            _nextScheduleItem = ScheduleItem(
-              title: 'Schedule unavailable',
-              startTime: TimeOfDay(hour: 0, minute: 0),
-              endTime: TimeOfDay(hour: 0, minute: 0),
-            );
-          });
-          print('Error loading calendar data: $error');
-        });
-  }
-
-  // Parse error message to make it more user-friendly
-  String _parseErrorMessage(String errorMessage) {
-    if (errorMessage.contains('network') || errorMessage.contains('Network')) {
-      return 'Network connection error';
-    } else if (errorMessage.contains('timeout') ||
-        errorMessage.contains('Timeout')) {
-      return 'Request timed out';
-    } else if (errorMessage.contains('calendar service') ||
-        errorMessage.contains('calendar')) {
-      return 'Calendar service unavailable';
-    } else if (errorMessage.contains('Invalid') ||
-        errorMessage.contains('invalid')) {
-      return 'Invalid calendar link';
-    } else {
-      return 'Unable to load calendar data';
+    // Silently try to fetch fresh data in the background to update the cache
+    try {
+      final freshData = await calendarManager.fetchData();
+      setState(() {
+        _calendarData = freshData;
+        _nextScheduleItem = _getNextScheduleItem(freshData);
+      });
+    } catch (error) {
+      // Silently fail - keep showing cached data
+      print('Could not fetch fresh data (using cached): $error');
     }
   }
+
 
   // Get upcoming assessments for the next 7 days
   List<Assessment> _getUpcomingAssessments() {
@@ -267,12 +214,6 @@ class _HomePageState extends State<HomePage>
   }
 
   void _showTodayMenuDialog() async {
-    setState(() {
-      _isLoadingMenu = true;
-      _hasMenuLoadError = false;
-      _menuErrorMessage = null;
-    });
-
     // Show loading dialog first
     showDialog(
       context: context,
@@ -314,7 +255,7 @@ class _HomePageState extends State<HomePage>
       menuData ??= await menuManager.fetchData();
 
       // Close loading dialog
-      Navigator.of(context).pop();
+      if (mounted) Navigator.of(context).pop();
 
       // Check if today's menu exists
       List<MenuSection>? todayMenu = menuData?[today];
@@ -324,21 +265,11 @@ class _HomePageState extends State<HomePage>
       } else {
         _showMenuContentDialog(todayMenu);
       }
-
-      setState(() {
-        _isLoadingMenu = false;
-      });
     } catch (e) {
       // Close loading dialog
-      if (Navigator.canPop(context)) {
+      if (mounted && Navigator.canPop(context)) {
         Navigator.of(context).pop();
       }
-
-      setState(() {
-        _isLoadingMenu = false;
-        _hasMenuLoadError = true;
-        _menuErrorMessage = 'Failed to load the menu: ${e.toString()}';
-      });
 
       _showMenuErrorDialog(e.toString());
     }
@@ -408,50 +339,40 @@ class _HomePageState extends State<HomePage>
 
   // Load games data from the cache manager
   Future<void> _loadGamesData() async {
-    setState(() {
-      _isLoadingGames = true;
-      _hasGamesError = false;
-      _gamesErrorMessage = null;
-    });
-
+    // Always load cached data first to display immediately (never show loading/error)
     try {
-      // Get cached data first
-      Map<String, Game>? cachedGames;
-      try {
-        cachedGames = gamesManager.getCachedData();
-      } catch (e) {
-        print('Error accessing cached games: $e');
+      final cachedString = prefs.getString('games_data');
+      if (cachedString != null && cachedString.isNotEmpty) {
+        final cachedGames = gamesManager.decodeData(cachedString);
+        if (cachedGames != null && cachedGames.isNotEmpty) {
+          List<Game> playedGames = cachedGames.values
+              .where((game) => game.homeScore != '-' && game.awayScore != '-')
+              .toList();
+          playedGames.sort((a, b) => b.date.compareTo(a.date));
+
+          setState(() {
+            _recentGames = playedGames.take(5).toList();
+          });
+        }
       }
+    } catch (e) {
+      print('Error loading cached games: $e');
+    }
 
-      // If no cached data, fetch fresh
-      cachedGames ??= await gamesManager.fetchData();
+    // Silently try to fetch fresh data in the background to update the cache
+    try {
+      final freshGames = await gamesManager.fetchData();
+      List<Game> playedGames = freshGames.values
+          .where((game) => game.homeScore != '-' && game.awayScore != '-')
+          .toList();
+      playedGames.sort((a, b) => b.date.compareTo(a.date));
 
-      // Process games data - get recent games with scores
-      if (cachedGames != null) {
-        final now = DateTime.now();
-
-        // Get played games (games with scores)
-        List<Game> playedGames =
-            cachedGames.values
-                .where((game) => game.homeScore != '-' && game.awayScore != '-')
-                .toList();
-
-        // Sort by date descending (most recent first)
-        playedGames.sort((a, b) => b.date.compareTo(a.date));
-
-        setState(() {
-          // Take the 5 most recent games
-          _recentGames = playedGames.take(5).toList();
-          _isLoadingGames = false;
-        });
-      }
-    } catch (error) {
       setState(() {
-        _isLoadingGames = false;
-        _hasGamesError = true;
-        _gamesErrorMessage = error.toString();
+        _recentGames = playedGames.take(5).toList();
       });
-      print('Error loading games: $error');
+    } catch (error) {
+      // Silently fail - keep showing cached data
+      print('Could not fetch fresh games (using cached): $error');
     }
   }
 
@@ -469,69 +390,9 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          // Force refresh data and wait for completion
-          setState(() {
-            _isLoading = true;
-            _isLoadingMenu = true; // Also set menu loading state
-            _errorMessage = null;
-            _hasDataLoadError = false;
-            _hasMenuLoadError = false; // Reset menu error state
-          });
-
-          try {
-            // Create both fetches in parallel
-            final calendarFuture = calendarManager.fetchData();
-            final menuFuture = menuManager.fetchData(); // Add menu data refresh
-
-            // Wait for both to complete
-            final results = await Future.wait([calendarFuture, menuFuture]);
-
-            // Process results
-            final newCalendarData = results[0] as Map<DateTime, CalendarItem>;
-            // Menu data is handled automatically by the cache manager
-
-            setState(() {
-              _calendarData = newCalendarData;
-              _nextScheduleItem = _getNextScheduleItem(newCalendarData);
-              _isLoading = false;
-              _isLoadingMenu = false; // Update menu loading state
-              _errorMessage = null;
-              _hasDataLoadError = false;
-              _hasMenuLoadError = false;
-            });
-
-            // Also refresh games data
-            _loadGamesData();
-          } catch (error) {
-            setState(() {
-              _isLoading = false;
-              _isLoadingMenu = false; // Update menu loading state
-              _errorMessage = _parseErrorMessage(error.toString());
-              _hasDataLoadError = true;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Failed to refresh: ${_parseErrorMessage(error.toString())}',
-                ),
-                backgroundColor: Theme.of(context).colorScheme.error,
-                action: SnackBarAction(
-                  label: 'Retry',
-                  textColor: Theme.of(context).colorScheme.onError,
-                  onPressed: () {
-                    _loadCalendarData();
-                    _loadGamesData();
-                    // Also retry menu data
-                    try {
-                      menuManager.fetchData();
-                    } catch (e) {
-                      print('Error refreshing menu data: $e');
-                    }
-                  },
-                ),
-              ),
-            );
-          }
+          // Simply reload all data - loading happens silently with cached data shown
+          await _loadCalendarData();
+          await _loadGamesData();
         },
         child: CustomScrollView(
           slivers: [
@@ -549,7 +410,7 @@ class _HomePageState extends State<HomePage>
                       MediaQuery.of(context).padding.top + 35;
 
                   if (height > collapsedHeight) {
-                    final double maxHeight = 145.0;
+                    final double maxHeight = 175.0;
                     progress =
                         (maxHeight - height) / (maxHeight - collapsedHeight);
                   }
@@ -657,7 +518,7 @@ class _HomePageState extends State<HomePage>
                           child: Opacity(
                             opacity: expandedTitleOpacity,
                             child: SizedBox(
-                              height: 150,
+                              height: 170,
                               child: Column(
                                 children: [
                                   Row(
@@ -673,10 +534,7 @@ class _HomePageState extends State<HomePage>
                                   ),
                                   Spacer(),
                                   InkWell(
-                                    onTap:
-                                        !_hasDataLoadError
-                                            ? _showTodayScheduleDialog
-                                            : null,
+                                    onTap: _showTodayScheduleDialog,
                                     child: Padding(
                                       padding: const EdgeInsets.only(
                                         left: 8.0,
@@ -697,73 +555,23 @@ class _HomePageState extends State<HomePage>
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
                                                 SizedBox(height: 16),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      _hasDataLoadError
-                                                          ? 'Data Error'
-                                                          : 'Up Next',
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.w500,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                    if (_hasDataLoadError) ...[
-                                                      SizedBox(width: 8),
-                                                      Icon(
-                                                        Icons.error_outline,
-                                                        color: Colors.white,
-                                                        size: 16,
-                                                      ),
-                                                    ],
-                                                    if (_isLoading) ...[
-                                                      SizedBox(width: 8),
-                                                      SizedBox(
-                                                        width: 16,
-                                                        height: 16,
-                                                        child: CircularProgressIndicator(
-                                                          strokeWidth: 2,
-                                                          valueColor:
-                                                              AlwaysStoppedAnimation<
-                                                                Color
-                                                              >(Colors.white),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ],
+                                                Text(
+                                                  'Up Next',
+                                                  style: TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.white,
+                                                  ),
                                                 ),
                                                 Text(
-                                                  _hasDataLoadError
-                                                      ? (_errorMessage ??
-                                                          'Failed to load schedule')
-                                                      : (_nextScheduleItem
-                                                              ?.title ??
-                                                          'No upcoming classes'),
+                                                  _nextScheduleItem?.title ??
+                                                      'No upcoming classes',
                                                   style: TextStyle(
                                                     fontSize: 24,
                                                     fontWeight: FontWeight.w600,
                                                     color: Colors.white,
                                                   ),
                                                 ),
-                                                if (_hasDataLoadError)
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          top: 4.0,
-                                                        ),
-                                                    child: Text(
-                                                      'Pull down to retry',
-                                                      style: TextStyle(
-                                                        fontSize: 12,
-                                                        color: Colors.white
-                                                            .withValues(
-                                                              alpha: 0.8,
-                                                            ),
-                                                      ),
-                                                    ),
-                                                  ),
                                               ],
                                             ),
                                           ),
@@ -771,8 +579,7 @@ class _HomePageState extends State<HomePage>
                                               _nextScheduleItem!.title !=
                                                   'No Class' &&
                                               _nextScheduleItem!.title !=
-                                                  'Schedule unavailable' &&
-                                              !_hasDataLoadError)
+                                                  'Schedule unavailable')
                                             Column(
                                               children: [
                                                 Text(
@@ -829,32 +636,16 @@ class _HomePageState extends State<HomePage>
                           opacity: collapsedTitleOpacity,
                           duration: const Duration(milliseconds: 100),
                           child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                if (_hasDataLoadError) ...[
-                                  Icon(
-                                    Icons.error_outline,
-                                    color: Colors.white,
-                                    size: 16,
-                                  ),
-                                  SizedBox(width: 8),
-                                ],
-                                Flexible(
-                                  child: Text(
-                                    _hasDataLoadError
-                                        ? (_errorMessage ??
-                                            'Schedule unavailable')
-                                        : "Up Next: ${_nextScheduleItem?.title ?? 'No upcoming classes'}",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            child: Flexible(
+                              child: Text(
+                                "Up Next: ${_nextScheduleItem?.title ?? 'No upcoming classes'}",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white,
                                 ),
-                              ],
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),
@@ -863,7 +654,7 @@ class _HomePageState extends State<HomePage>
                   );
                 },
               ),
-              expandedHeight: 155.0,
+              expandedHeight: 175.0,
               toolbarHeight: 35,
             ),
 
@@ -872,89 +663,47 @@ class _HomePageState extends State<HomePage>
                 margin: EdgeInsets.only(top: 32),
                 padding: EdgeInsets.symmetric(horizontal: 16),
 
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Recent Games',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (_hasGamesError) ...[
-                          SizedBox(width: 8),
-                          Icon(
-                            Icons.error_outline,
-                            color: Theme.of(context).colorScheme.error,
-                            size: 20,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+                child: Text(
+                  'Recent Games',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 190,
-                child:
-                    _isLoadingGames
-                        ? Center(child: CircularProgressIndicator())
-                        : _hasGamesError
-                        ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Could not load games',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                              ),
-                              TextButton(
-                                onPressed: _loadGamesData,
-                                child: Text('Retry'),
-                              ),
-                            ],
+                child: _recentGames.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No recent games found',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.italic,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
                           ),
-                        )
-                        : _recentGames.isEmpty
-                        ? Center(
-                          child: Text(
-                            'No recent games found',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontStyle: FontStyle.italic,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.7),
-                            ),
-                          ),
-                        )
-                        : ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: _recentGames.length,
-                          itemBuilder: (context, index) {
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                right: 16,
-                                top: 8,
-                                bottom: 8,
-                              ),
-                              child: GameWidget(game: _recentGames[index]),
-                            );
-                          },
                         ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: _recentGames.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              right: 16,
+                              top: 8,
+                              bottom: 8,
+                            ),
+                            child: GameWidget(game: _recentGames[index]),
+                          );
+                        },
+                      ),
               ),
             ),
 
@@ -963,29 +712,12 @@ class _HomePageState extends State<HomePage>
               child: Container(
                 margin: EdgeInsets.only(top: 32),
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          'Upcoming Assessments',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        if (_hasDataLoadError) ...[
-                          SizedBox(width: 8),
-                          Icon(
-                            Icons.error_outline,
-                            color: Theme.of(context).colorScheme.error,
-                            size: 20,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
+                child: Text(
+                  'Upcoming Assessments',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ),
@@ -994,78 +726,7 @@ class _HomePageState extends State<HomePage>
             SliverToBoxAdapter(
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child:
-                    _isLoading
-                        ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24.0),
-                            child: Column(
-                              children: [
-                                CircularProgressIndicator(),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Loading assessments...',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                        : _hasDataLoadError
-                        ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 24.0),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.error_outline,
-                                  size: 48,
-                                  color: Theme.of(context).colorScheme.error,
-                                ),
-                                SizedBox(height: 16),
-                                Text(
-                                  'Failed to load assessments',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  _errorMessage ?? 'Unknown error occurred',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(height: 16),
-                                ElevatedButton.icon(
-                                  onPressed: _loadCalendarData,
-                                  icon: Icon(Icons.refresh, size: 16),
-                                  label: Text('Retry'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor:
-                                        Theme.of(context).colorScheme.primary,
-                                    foregroundColor:
-                                        Theme.of(context).colorScheme.onPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                        : upcomingAssessments.isEmpty
+                child: upcomingAssessments.isEmpty
                         ? Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24.0),

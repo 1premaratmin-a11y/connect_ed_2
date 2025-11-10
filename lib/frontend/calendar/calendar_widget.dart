@@ -63,9 +63,12 @@ class _CalendarWidgetState extends State<CalendarWidget>
     final DateTime lastDay = DateTime(month.year, month.month + 1, 0);
 
     // First day of the calendar grid (may be from the previous month)
+    // Use calendar arithmetic instead of Duration to avoid DST issues
     int firstDayOffset = firstDay.weekday % 7;
-    final DateTime firstCalendarDay = firstDay.subtract(
-      Duration(days: firstDayOffset),
+    final DateTime firstCalendarDay = DateTime(
+      firstDay.year,
+      firstDay.month,
+      firstDay.day - firstDayOffset,
     );
 
     // Calculate how many weeks we need
@@ -74,11 +77,14 @@ class _CalendarWidgetState extends State<CalendarWidget>
     int weeksNeeded = (daysToShow / 7).ceil();
 
     // Generate only the needed weeks
+    // Use calendar arithmetic to avoid DST-related date shifts
     for (int week = 0; week < weeksNeeded; week++) {
       final List<DateTime> weekDays = [];
       for (int day = 0; day < 7; day++) {
-        final DateTime date = firstCalendarDay.add(
-          Duration(days: week * 7 + day),
+        final DateTime date = DateTime(
+          firstCalendarDay.year,
+          firstCalendarDay.month,
+          firstCalendarDay.day + week * 7 + day,
         );
         weekDays.add(date);
       }
