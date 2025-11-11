@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:connect_ed_2/classes/assessment.dart';
 import 'package:connect_ed_2/classes/calendar_item.dart';
 import 'package:connect_ed_2/classes/game.dart';
@@ -12,6 +13,7 @@ import 'package:connect_ed_2/requests/calendar_requests.dart';
 import 'package:connect_ed_2/requests/games_cache_manager.dart';
 import 'package:connect_ed_2/requests/menu_cache_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import 'menu_dialog.dart';
@@ -82,7 +84,6 @@ class _HomePageState extends State<HomePage>
       print('Could not fetch fresh data (using cached): $error');
     }
   }
-
 
   // Get upcoming assessments for the next 7 days
   List<Assessment> _getUpcomingAssessments() {
@@ -202,12 +203,45 @@ class _HomePageState extends State<HomePage>
   }
 
   void _showTodayScheduleDialog() {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (BuildContext context) {
+      barrierDismissible: true,
+      barrierLabel: 'Schedule',
+      barrierColor: Colors.black.withValues(alpha: 0.3),
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, animation, secondaryAnimation) {
         return TodayScheduleDialog(
           calendarData: _calendarData,
           dateToShow: DateTime.now(),
+        );
+      },
+      transitionBuilder: (context, animation, secondaryAnimation, child) {
+        // Fade animation
+        final fadeAnimation = Tween<double>(
+          begin: 0.0,
+          end: 1.0,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+
+        // Scale animation - subtle zoom in effect
+        final scaleAnimation = Tween<double>(begin: 0.95, end: 1.0).animate(
+          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+        );
+
+        // Blur animation
+        final blurAnimation = Tween<double>(
+          begin: 0.0,
+          end: 10.0,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+
+        return BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: blurAnimation.value,
+            sigmaY: blurAnimation.value,
+          ),
+          child: FadeTransition(
+            opacity: fadeAnimation,
+            child: ScaleTransition(scale: scaleAnimation, child: child),
+          ),
         );
       },
     );
@@ -263,7 +297,7 @@ class _HomePageState extends State<HomePage>
       if (todayMenu == null || todayMenu.isEmpty) {
         _showNoMenuDialog();
       } else {
-        _showMenuContentDialog(todayMenu);
+        _navigateToMenuPage(todayMenu);
       }
     } catch (e) {
       // Close loading dialog
@@ -273,6 +307,54 @@ class _HomePageState extends State<HomePage>
 
       _showMenuErrorDialog(e.toString());
     }
+  }
+
+  void _navigateToMenuPage(List<MenuSection> menuSections) {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder:
+            (context, animation, secondaryAnimation) =>
+                MenuDialog(menuSections: menuSections),
+        transitionDuration: const Duration(milliseconds: 400),
+        reverseTransitionDuration: const Duration(milliseconds: 350),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Curved animations for smooth effect
+          final curvedAnimation = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeInOutCubic,
+            reverseCurve: Curves.easeInOutCubic,
+          );
+
+          // Scale animation - expands from small to full screen
+          final scaleAnimation = Tween<double>(
+            begin: 0.0,
+            end: 1.0,
+          ).animate(curvedAnimation);
+
+          // Fade animation for smooth appearance
+          final fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+            CurvedAnimation(
+              parent: animation,
+              curve: Interval(0.0, 0.5, curve: Curves.easeOut),
+            ),
+          );
+
+          // Slide animation - subtle upward movement
+          final slideAnimation = Tween<Offset>(
+            begin: const Offset(0, 0.1),
+            end: Offset.zero,
+          ).animate(curvedAnimation);
+
+          return FadeTransition(
+            opacity: fadeAnimation,
+            child: SlideTransition(
+              position: slideAnimation,
+              child: ScaleTransition(scale: scaleAnimation, child: child),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   void _showNoMenuDialog() {
@@ -330,13 +412,6 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  void _showMenuContentDialog(List<MenuSection> menuSections) {
-    showDialog(
-      context: context,
-      builder: (context) => MenuDialog(menuSections: menuSections),
-    );
-  }
-
   // Load games data from the cache manager
   Future<void> _loadGamesData() async {
     // Always load cached data first to display immediately (never show loading/error)
@@ -345,9 +420,12 @@ class _HomePageState extends State<HomePage>
       if (cachedString != null && cachedString.isNotEmpty) {
         final cachedGames = gamesManager.decodeData(cachedString);
         if (cachedGames != null && cachedGames.isNotEmpty) {
-          List<Game> playedGames = cachedGames.values
-              .where((game) => game.homeScore != '-' && game.awayScore != '-')
-              .toList();
+          List<Game> playedGames =
+              cachedGames.values
+                  .where(
+                    (game) => game.homeScore != '-' && game.awayScore != '-',
+                  )
+                  .toList();
           playedGames.sort((a, b) => b.date.compareTo(a.date));
 
           setState(() {
@@ -362,9 +440,10 @@ class _HomePageState extends State<HomePage>
     // Silently try to fetch fresh data in the background to update the cache
     try {
       final freshGames = await gamesManager.fetchData();
-      List<Game> playedGames = freshGames.values
-          .where((game) => game.homeScore != '-' && game.awayScore != '-')
-          .toList();
+      List<Game> playedGames =
+          freshGames.values
+              .where((game) => game.homeScore != '-' && game.awayScore != '-')
+              .toList();
       playedGames.sort((a, b) => b.date.compareTo(a.date));
 
       setState(() {
@@ -480,11 +559,7 @@ class _HomePageState extends State<HomePage>
                                   -1.0 + ((value - 0.75) * 8.0); // -1.0 to 1.0
                             }
 
-                            // Check if we're in light mode or dark mode
-                            final isDarkMode =
-                                Theme.of(context).brightness == Brightness.dark;
-
-                            // Select appropriate gradient colors based on theme mode
+                            // Gradient colors for the app bar
                             final List<Color> gradientColors = [
                               Color.fromARGB(255, 160, 207, 235),
                               Color.fromARGB(255, 0, 66, 112),
@@ -527,14 +602,17 @@ class _HomePageState extends State<HomePage>
                                       OpacityIconButton(
                                         onPressed:
                                             _showTodayMenuDialog, // Connect to menu dialog
-                                        icon: Icons.flatware,
+                                        icon: Icons.restaurant,
                                         color: Colors.white,
                                       ),
                                     ],
                                   ),
                                   Spacer(),
                                   InkWell(
-                                    onTap: _showTodayScheduleDialog,
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      _showTodayScheduleDialog();
+                                    },
                                     child: Padding(
                                       padding: const EdgeInsets.only(
                                         left: 8.0,
@@ -665,45 +743,42 @@ class _HomePageState extends State<HomePage>
 
                 child: Text(
                   'Recent Games',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: SizedBox(
                 height: 190,
-                child: _recentGames.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No recent games found',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontStyle: FontStyle.italic,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7),
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: _recentGames.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.only(
-                              right: 16,
-                              top: 8,
-                              bottom: 8,
+                child:
+                    _recentGames.isEmpty
+                        ? Center(
+                          child: Text(
+                            'No recent games found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
-                            child: GameWidget(game: _recentGames[index]),
-                          );
-                        },
-                      ),
+                          ),
+                        )
+                        : ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: _recentGames.length,
+                          itemBuilder: (context, index) {
+                            return Padding(
+                              padding: const EdgeInsets.only(
+                                right: 16,
+                                top: 8,
+                                bottom: 8,
+                              ),
+                              child: GameWidget(game: _recentGames[index]),
+                            );
+                          },
+                        ),
               ),
             ),
 
@@ -714,10 +789,7 @@ class _HomePageState extends State<HomePage>
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
                   'Upcoming Assessments',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -726,7 +798,8 @@ class _HomePageState extends State<HomePage>
             SliverToBoxAdapter(
               child: Container(
                 padding: EdgeInsets.symmetric(horizontal: 16),
-                child: upcomingAssessments.isEmpty
+                child:
+                    upcomingAssessments.isEmpty
                         ? Center(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 24.0),
@@ -810,16 +883,12 @@ class _HomePageState extends State<HomePage>
                                       ],
                                     ),
                                   ),
-                                  Container(
-                                    child: Text(
-                                      _formatAssessmentDate(assessment.date),
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        color:
-                                            Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                      ),
+                                  Text(
+                                    _formatAssessmentDate(assessment.date),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ],

@@ -1,16 +1,21 @@
 import 'package:connect_ed_2/classes/menu_section.dart';
 import 'package:flutter/material.dart';
 
-class MenuDialog extends StatefulWidget {
+class MenuPage extends StatefulWidget {
   final List<MenuSection> menuSections;
 
-  const MenuDialog({super.key, required this.menuSections});
+  const MenuPage({super.key, required this.menuSections});
 
   @override
-  MenuDialogState createState() => MenuDialogState();
+  MenuPageState createState() => MenuPageState();
 }
 
-class MenuDialogState extends State<MenuDialog> {
+// Keep old name for backward compatibility if needed
+class MenuDialog extends MenuPage {
+  const MenuDialog({super.key, required super.menuSections});
+}
+
+class MenuPageState extends State<MenuPage> {
   // Track expanded state for each section
   late Map<int, bool> _expandedSections;
 
@@ -60,124 +65,135 @@ class MenuDialogState extends State<MenuDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Row(
-        children: [
-          Icon(Icons.flatware, size: 24),
-          SizedBox(width: 8),
-          Text("Today's Menu"),
-        ],
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.close, size: 26),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Text(
+          "Today's Menu",
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -0.5,
+          ),
+        ),
+        centerTitle: false,
       ),
-      content: SizedBox(
-        width: double.maxFinite,
-        height: 400, // Fixed height for scrolling
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: widget.menuSections.length,
-          itemBuilder: (context, index) {
-            final menuSection = widget.menuSections[index];
-            if (menuSection.isEmpty) return SizedBox.shrink();
+      body: ListView.builder(
+        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        itemCount: widget.menuSections.length,
+        itemBuilder: (context, index) {
+          final menuSection = widget.menuSections[index];
+          if (menuSection.isEmpty) return SizedBox.shrink();
 
-            final isExpanded = _expandedSections[index] ?? true;
-            final formattedTitle = _formatSectionTitle(
-              menuSection.sectionTitle,
-            );
+          final isExpanded = _expandedSections[index] ?? true;
+          final formattedTitle = _formatSectionTitle(menuSection.sectionTitle);
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Sticky header with toggle button - removed elevation
-                InkWell(
-                  onTap: () => _toggleSection(index),
-                  child: Container(
-                    color: Theme.of(context).colorScheme.surface,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 8.0,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          formattedTitle,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Section header with toggle button - minimal design, no splash
+              GestureDetector(
+                onTap: () => _toggleSection(index),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16.0,
+                    horizontal: 4.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        formattedTitle,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                          letterSpacing: -0.5,
                         ),
-                        Icon(
-                          isExpanded ? Icons.expand_less : Icons.expand_more,
-                          color: Theme.of(context).colorScheme.primary,
+                      ),
+                      AnimatedRotation(
+                        turns: isExpanded ? 0 : 0.5,
+                        duration: Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        child: Icon(
+                          Icons.expand_less,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                          size: 28,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-                // Expandable content
-                AnimatedContainer(
-                  duration: Duration(milliseconds: 300),
-                  height: isExpanded ? null : 0,
-                  child:
-                      isExpanded
-                          ? Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children:
-                                  menuSection.courses.map((course) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12.0,
-                                        top: 8.0,
-                                      ),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            _formatSectionTitle(
-                                              course[0],
-                                            ), // Capitalize course name
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 14,
-                                            ),
+              ),
+              // Expandable content with smooth animation
+              AnimatedSize(
+                duration: Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child:
+                    isExpanded
+                        ? Padding(
+                          padding: const EdgeInsets.only(
+                            left: 4.0,
+                            right: 4.0,
+                            bottom: 8.0,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children:
+                                menuSection.courses.map((course) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 20.0,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _formatSectionTitle(course[0]),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 15,
+                                            color:
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurface,
+                                            letterSpacing: -0.2,
                                           ),
-                                          SizedBox(height: 2),
-                                          Text(
-                                            _formatFoodItems(
-                                              course[1],
-                                            ), // Process food items text
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                            ), // 12px as requested
+                                        ),
+                                        SizedBox(height: 4),
+                                        Text(
+                                          _formatFoodItems(course[1]),
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .onSurface
+                                                .withValues(alpha: 0.65),
+                                            height: 1.6,
+                                            letterSpacing: 0.1,
                                           ),
-                                        ],
-                                      ),
-                                    );
-                                  }).toList(),
-                            ),
-                          )
-                          : SizedBox.shrink(),
-                ),
-                Divider(
-                  height: 4,
-                  color: Theme.of(context).colorScheme.tertiary,
-                ),
-              ],
-            );
-          },
-        ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                        )
+                        : SizedBox.shrink(),
+              ),
+            ],
+          );
+        },
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('CLOSE'),
-        ),
-      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:connect_ed_2/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_sticky_header/flutter_sticky_header.dart';
 import 'feedback_form.dart';
 import 'bug_report_form.dart';
 
@@ -125,10 +126,10 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: CustomScrollView(
         slivers: [
-          // Settings Header
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 16),
+          SliverStickyHeader(
+            header: Container(
+              padding: const EdgeInsets.fromLTRB(24, 100, 24, 24),
+              color: Theme.of(context).colorScheme.surface,
               child: Text(
                 'Settings',
                 style: TextStyle(
@@ -139,267 +140,329 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
               ),
             ),
-          ),
-          // Main Content with Consolidated Padding
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Calendar Settings
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Calendar Settings',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w600,
+                // Calendar Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, bottom: 8),
+                        child: Text(
+                          'CALENDAR',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.6),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Update the iCalendar (iCal) link used for fetching your schedule and assessments.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w400,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _calendarLinkController,
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor:
-                                  Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainer,
-                              labelText: 'Calendar Link (iCal URL)',
-                              hintText:
-                                  'https://example.com/path/to/calendar.ics',
-                              hintStyle: TextStyle(
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Update the iCalendar (iCal) link used for fetching your schedule and assessments.',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontFamily: 'Montserrat',
+                                fontWeight: FontWeight.w400,
                                 color: Theme.of(
                                   context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.5),
+                                ).colorScheme.onSurface.withValues(alpha: 0.8),
                               ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 1.5,
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _calendarLinkController,
+                                    decoration: InputDecoration(
+                                      filled: true,
+                                      fillColor:
+                                          Theme.of(context).colorScheme.surface,
+                                      labelText: 'Calendar Link (iCal URL)',
+                                      hintText:
+                                          'https://example.com/path/to/calendar.ics',
+                                      hintStyle: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.5),
+                                      ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        borderSide: BorderSide(
+                                          color:
+                                              Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 14,
+                                          ),
+                                    ),
+                                    keyboardType: TextInputType.url,
+                                    minLines: 1,
+                                    maxLines: 1,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 14,
-                              ),
+                                const SizedBox(width: 12),
+                                ElevatedButton(
+                                  onPressed:
+                                      _isCalendarLinkEntered
+                                          ? _saveCalendarLink
+                                          : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                        Theme.of(context).colorScheme.primary,
+                                    foregroundColor:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 14,
+                                    ),
+                                    elevation: 2,
+                                  ),
+                                  child: const Text(
+                                    'Save',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontFamily: 'Montserrat',
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            keyboardType: TextInputType.url,
-                            minLines: 1,
-                            maxLines: 1,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          onPressed:
-                              _isCalendarLinkEntered ? _saveCalendarLink : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            elevation: 2,
-                          ),
-                          child: const Text(
-                            'Save',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 32),
-                // Feedback and Bug Reports
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Feedback and Bugs',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Help us improve Connect-Ed by sharing your thoughts or reporting any issues you encounter.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontFamily: 'Montserrat',
-                        fontWeight: FontWeight.w400,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const FeedbackFormPage(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            elevation: 2,
-                          ),
-                          child: const Text(
-                            'Feedback Form',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w600,
-                            ),
+                // Feedback & Bugs Section
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 16, bottom: 8),
+                        child: Text(
+                          'FEEDBACK & BUGS',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.6),
+                            letterSpacing: 0.5,
                           ),
                         ),
-                        const SizedBox(width: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => const BugReportFormPage(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Theme.of(context).colorScheme.primary,
-                            foregroundColor:
-                                Theme.of(context).colorScheme.onPrimary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 14,
-                            ),
-                            elevation: 2,
-                          ),
-                          child: const Text(
-                            'Bug Report',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontFamily: 'Montserrat',
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainer,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ],
-                    ),
-                  ],
+                        child: Column(
+                          children: [
+                            _buildSettingsTile(
+                              context: context,
+                              title: 'Feedback',
+                              subtitle:
+                                  'Share your thoughts and help us improve',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const FeedbackFormPage(),
+                                  ),
+                                );
+                              },
+                              isFirst: true,
+                            ),
+                            Divider(
+                              height: 1,
+                              thickness: 1,
+                              indent: 16,
+                              endIndent: 16,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.1),
+                            ),
+                            _buildSettingsTile(
+                              context: context,
+                              title: 'Bug Report',
+                              subtitle: 'Let us know about any issues',
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const BugReportFormPage(),
+                                  ),
+                                );
+                              },
+                              isLast: true,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 48),
                 // Made by Section
-                AnimatedOpacity(
-                  opacity: 1.0,
-                  duration: const Duration(milliseconds: 500),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceContainer,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Made by',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  child: AnimatedOpacity(
+                    opacity: 1.0,
+                    duration: const Duration(milliseconds: 500),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceContainer,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Abdur-Rahman Rana ’25,\nDemilade Olawumni ’25,\nJames Tan ’26',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontFamily: 'Montserrat',
-                            fontWeight: FontWeight.w500,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.8),
-                            height: 1.5,
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'Made by',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Text(
+                            'James Tan \'26\nAbdur-Rahman Rana \'25,\nDemilade Olawumni \'25',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontFamily: 'Montserrat',
+                              fontWeight: FontWeight.w500,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.8),
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ]),
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 32)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required BuildContext context,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.vertical(
+          top: isFirst ? const Radius.circular(12) : Radius.zero,
+          bottom: isLast ? const Radius.circular(12) : Radius.zero,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontFamily: 'Montserrat',
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

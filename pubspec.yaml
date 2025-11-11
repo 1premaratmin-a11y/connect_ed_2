@@ -1,5 +1,5 @@
 name: connect_ed_2
-description: "A new Flutter project."
+description: "Connect Ed 2.0"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -16,10 +16,10 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.0.0+1
+version: 2.1.0+1
 
 environment:
-    sdk: ^3.7.0-267.0.dev
+  sdk: ^3.7.0-267.0.dev
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -28,129 +28,129 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
-    flutter:
-        sdk: flutter
+  flutter:
+    sdk: flutter
 
-    core_ui:
-      path: ./core_ui
+  core_ui:
+    path: ./core_ui
 
-    cupertino_icons: ^1.0.8
-    firebase_core: ^3.12.1
-    firebase_auth: ^5.5.1
-    cloud_firestore: ^5.6.5
-    firebase_messaging: ^15.2.4
-    firebase_crashlytics: ^4.3.4
-    intl: ^0.18.0
-    flutter_sticky_header: ^0.8.0
-    shared_preferences: ^2.2.0
-    http: ^1.3.0
-    icalendar: ^0.1.3
-    icalendar_parser: ^2.1.0
-    carousel_slider: ^5.0.0
-    url_launcher: ^6.3.1
-    webview_flutter: ^4.13.0
-    cached_network_image: ^3.4.1
-    logger: ^2.5.0
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.5.1
+  cloud_firestore: ^5.6.5
+  firebase_messaging: ^15.2.4
+  firebase_crashlytics: ^4.3.4
+  intl: ^0.18.0
+  flutter_sticky_header: ^0.8.0
+  shared_preferences: ^2.2.0
+  http: ^1.3.0
+  icalendar: ^0.1.3
+  icalendar_parser: ^2.1.0
+  carousel_slider: ^5.0.0
+  url_launcher: ^6.3.1
+  webview_flutter: ^4.13.0
+  cached_network_image: ^3.4.1
+  logger: ^2.5.0
 
 dev_dependencies:
-    flutter_test:
-        sdk: flutter
+  flutter_test:
+    sdk: flutter
 
-    # The "flutter_lints" package below contains a set of recommended lints to
-    # encourage good coding practices. The lint set provided by the package is
-    # activated in the `analysis_options.yaml` file located at the root of your
-    # package. See that file for information about deactivating specific lint
-    # rules and activating additional ones.
-    flutter_lints: ^6.0.0
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-    # The following line ensures that the Material Icons font is
-    # included with your application, so that you can use the icons in
-    # the material Icons class.
-    uses-material-design: true
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
 
-    # To add assets to your application, add an assets section, like this:
-    assets:
-        - assets/wooly_test.png
-        - assets/ConnectEd Transparent.png
-        - assets/step1.png
-        - assets/step2.png
-        - assets/step3.png
-        - assets/step4.png
-        - assets/AC Logo.png
-        - assets/ALB Logo.png
-        - assets/Appleby Aerial.png
-        - assets/BG Logo.png
-        - assets/BH Logo.png
-        - assets/BSS Logo.png
-        - assets/CDS Logo.png
-        - assets/ConnectEd Transparent.png
-        - assets/CPC Logo.png
-        - assets/CS Logo.png
-        - assets/DLS Logo.png
-        - assets/GCS Logo.png
-        - assets/HC Logo.png
-        - assets/HNMCS Logo.png
-        - assets/HS Logo.png
-        - assets/HSC Logo.png
-        - assets/HTS Logo.png
-        - assets/LCS Logo.png
-        - assets/NS Logo.png
-        - assets/PC Logo.png
-        - assets/RC Logo.png
-        - assets/RDS Logo.png
-        - assets/RSGC Logo.png
-        - assets/SAC Logo.png
-        - assets/SAS Logo.png
-        - assets/SHS Logo.png
-        - assets/SJK Logo.png
-        - assets/SMC Logo.png
-        - assets/SMLS Logo.png
-        - assets/step1.png
-        - assets/step2.png
-        - assets/step3.png
-        - assets/step4.png
-        - assets/TCS Logo.png
-        - assets/TFS Logo.png
-        - assets/TMS Logo.png
-        - assets/TYS Logo.png
-        - assets/UCC Logo.png
-        - assets/VC Logo.png
-    #   - images/a_dot_ham.jpeg
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    - assets/wooly_test.png
+    - assets/ConnectEd Transparent.png
+    - assets/step1.png
+    - assets/step2.png
+    - assets/step3.png
+    - assets/step4.png
+    - assets/AC Logo.png
+    - assets/ALB Logo.png
+    - assets/Appleby Aerial.png
+    - assets/BG Logo.png
+    - assets/BH Logo.png
+    - assets/BSS Logo.png
+    - assets/CDS Logo.png
+    - assets/ConnectEd Transparent.png
+    - assets/CPC Logo.png
+    - assets/CS Logo.png
+    - assets/DLS Logo.png
+    - assets/GCS Logo.png
+    - assets/HC Logo.png
+    - assets/HNMCS Logo.png
+    - assets/HS Logo.png
+    - assets/HSC Logo.png
+    - assets/HTS Logo.png
+    - assets/LCS Logo.png
+    - assets/NS Logo.png
+    - assets/PC Logo.png
+    - assets/RC Logo.png
+    - assets/RDS Logo.png
+    - assets/RSGC Logo.png
+    - assets/SAC Logo.png
+    - assets/SAS Logo.png
+    - assets/SHS Logo.png
+    - assets/SJK Logo.png
+    - assets/SMC Logo.png
+    - assets/SMLS Logo.png
+    - assets/step1.png
+    - assets/step2.png
+    - assets/step3.png
+    - assets/step4.png
+    - assets/TCS Logo.png
+    - assets/TFS Logo.png
+    - assets/TMS Logo.png
+    - assets/TYS Logo.png
+    - assets/UCC Logo.png
+    - assets/VC Logo.png
+  #   - images/a_dot_ham.jpeg
 
-    # An image asset can refer to one or more resolution-specific "variants", see
-    # https://flutter.dev/to/resolution-aware-images
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
 
-    # For details regarding adding assets from package dependencies, see
-    # https://flutter.dev/to/asset-from-package
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
 
-    # To add custom fonts to your application, add a fonts section here,
-    # in this "flutter" section. Each entry in this list should have a
-    # "family" key with the font family name, and a "fonts" key with a
-    # list giving the asset and other descriptors for the font. For
-    # example:
-    fonts:
-        - family: Montserrat
-          fonts:
-              - asset: fonts/Montserrat-Light.ttf
-                weight: 300
-              - asset: fonts/Montserrat-Regular.ttf
-                weight: 400
-              - asset: fonts/Montserrat-Medium.ttf
-                weight: 500
-              - asset: fonts/Montserrat-SemiBold.ttf
-                weight: 600
-              - asset: fonts/Montserrat-Bold.ttf
-                weight: 700
-    #   - family: Trajan Pro
-    #     fonts:
-    #       - asset: fonts/TrajanPro.ttf
-    #       - asset: fonts/TrajanPro_Bold.ttf
-    #         weight: 700
-    #
-    # For details regarding fonts from package dependencies,
-    # see https://flutter.dev/to/font-from-package
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: fonts/Montserrat-Light.ttf
+          weight: 300
+        - asset: fonts/Montserrat-Regular.ttf
+          weight: 400
+        - asset: fonts/Montserrat-Medium.ttf
+          weight: 500
+        - asset: fonts/Montserrat-SemiBold.ttf
+          weight: 600
+        - asset: fonts/Montserrat-Bold.ttf
+          weight: 700
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package

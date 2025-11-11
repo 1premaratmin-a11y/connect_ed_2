@@ -689,7 +689,7 @@ class _CalendarPageState extends State<CalendarPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Replace InkWell with GestureDetector and use AnimatedOpacity
+                // GestureDetector with AnimatedRotation - no splash
                 GestureDetector(
                   onTap: () => _toggleMenuSection(index),
                   child: Padding(
@@ -708,11 +708,12 @@ class _CalendarPageState extends State<CalendarPage>
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
-                        AnimatedOpacity(
-                          opacity: isExpanded ? 1.0 : 0.6,
-                          duration: const Duration(milliseconds: 200),
+                        AnimatedRotation(
+                          turns: isExpanded ? 0 : 0.5,
+                          duration: Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
                           child: Icon(
-                            isExpanded ? Icons.expand_less : Icons.expand_more,
+                            Icons.expand_less,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
@@ -720,40 +721,44 @@ class _CalendarPageState extends State<CalendarPage>
                     ),
                   ),
                 ),
-                // Direct conditional content instead of animated crossfade
-                if (isExpanded)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children:
-                          menuSection.courses.map((course) {
-                            return Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: 12.0,
-                                top: 8.0,
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _formatSectionTitle(course[0]),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
+                // Smooth animated content expansion
+                AnimatedSize(
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  child: isExpanded
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: menuSection.courses.map((course) {
+                              return Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: 12.0,
+                                  top: 8.0,
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _formatSectionTitle(course[0]),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
                                     ),
-                                  ),
-                                  SizedBox(height: 2),
-                                  Text(
-                                    _formatFoodItems(course[1]),
-                                    style: TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                    ),
-                  ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      _formatFoodItems(course[1]),
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                ),
                 // Change divider color to tertiary and reduce height
                 Divider(
                   height: 1, // Reduced height
