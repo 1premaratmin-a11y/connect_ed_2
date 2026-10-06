@@ -72,7 +72,10 @@ tasks/
 .cursor/
 
 # Firebase configuration (contains sensitive API keys)
+# `flutterfire configure` (see firebase.json) writes to lib/firebase_options.dart,
+# so that path MUST be ignored too or real API keys get committed.
 lib/firebase/firebase_options.dart
+lib/firebase_options.dart
 
 # Error logs with personal information
 error.txt

@@ -10,7 +10,7 @@ import 'package:connect_ed_2/frontend/sports/sports.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'firebase/firebase_options.dart';
+import 'firebase_options.dart';
 
 // Global SharedPreferences instance
 late SharedPreferences prefs;
