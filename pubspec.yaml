@@ -75,7 +75,6 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/wooly_test.png
     - assets/ConnectEd Transparent.png
     - assets/step1.png
     - assets/step2.png

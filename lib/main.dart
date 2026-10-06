@@ -1,6 +1,4 @@
-import 'package:connect_ed_2/frontend/articles/articles.dart';
 import 'package:connect_ed_2/frontend/calendar/calendar.dart';
-import 'package:connect_ed_2/frontend/events/events.dart';
 import 'package:connect_ed_2/frontend/home/home.dart';
 import 'package:connect_ed_2/frontend/onboarding/welcome.dart';
 import 'package:connect_ed_2/frontend/settings/settings.dart';
