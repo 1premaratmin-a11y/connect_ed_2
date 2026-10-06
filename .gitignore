@@ -44,6 +44,15 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
+# Xcode / Flutter build artifacts. 69 files under ios/build/ were committed by
+# accident; they are regenerated on every build and bloat the repo history.
+# NOTE: the already-tracked copies still need `git rm --cached -- ios/build`
+# to actually leave the repo -- adding them here only stops new ones.
+ios/build/
+**/XCBuildData/
+ios/Flutter/ephemeral/
+**/.generated/
+
 # Added by Claude Task Master
 # Logs
 logs
