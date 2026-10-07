@@ -6,6 +6,7 @@ import 'package:connect_ed_2/frontend/settings/settings.dart';
 import 'package:connect_ed_2/frontend/setup/nav_bar.dart';
 import 'package:connect_ed_2/frontend/setup/styles.dart';
 import 'package:connect_ed_2/frontend/sports/sports.dart';
+import 'package:connect_ed_2/requests/widget_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,6 +66,14 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _selectedIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // The home/lock-screen widgets show data this app publishes, so they are
+    // refreshed whenever it runs. No-ops on web and desktop. See WIDGET.md.
+    WidgetBridge.publishFromCache();
+  }
 
   List<Widget> pages = [
     const HomePage(),

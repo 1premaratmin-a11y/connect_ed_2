@@ -12,6 +12,7 @@ import 'package:connect_ed_2/requests/cache_manager.dart';
 import 'package:connect_ed_2/requests/calendar_requests.dart';
 import 'package:connect_ed_2/requests/games_cache_manager.dart';
 import 'package:connect_ed_2/requests/menu_cache_manager.dart';
+import 'package:connect_ed_2/requests/widget_bridge.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -79,6 +80,9 @@ class _HomePageState extends State<HomePage>
         _calendarData = freshData;
         _nextScheduleItem = _getNextScheduleItem(freshData);
       });
+      // Republish now the cache is fresh, so the widgets are correct after the
+      // very first run rather than a launch later. No-ops on web/desktop.
+      WidgetBridge.publishFromCache();
     } catch (error) {
       // Silently fail - keep showing cached data
       print('Could not fetch fresh data (using cached): $error');
